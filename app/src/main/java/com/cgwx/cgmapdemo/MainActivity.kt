@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.cgwx.cgmap.CGFeature
 import com.cgwx.cgmap.CGLatLng
@@ -76,9 +78,6 @@ class MainActivity : ComponentActivity() {
                     myLocation = location
                     Log.d("myLocation", location.toString())
 
-                    /**
-                     * for test
-                     */
                     if (initFlag) {
                         cgMapView.value?.flyTo(location, 18.0)
                         initFlag = false
@@ -108,6 +107,31 @@ class MainActivity : ComponentActivity() {
             )
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        cgMapView.value?.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        cgMapView.value?.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        cgMapView.value?.onPause()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        cgMapView.value?.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        cgMapView.value?.onDestroy()
+    }
 }
 
 @Composable
@@ -122,6 +146,39 @@ fun MainScreen(
     val vertexFlag = remember { mutableStateOf<Boolean>(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+
+    // 添加生命周期观察者
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> {
+                    cgMapView.value?.onCreate(savedInstanceState)
+                }
+                Lifecycle.Event.ON_START -> {
+                    cgMapView.value?.onStart()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    cgMapView.value?.onResume()
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    cgMapView.value?.onPause()
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    cgMapView.value?.onStop()
+                }
+                Lifecycle.Event.ON_DESTROY -> {
+                    cgMapView.value?.onDestroy()
+                }
+                Lifecycle.Event.ON_ANY -> {
+                    // 处理其他生命周期事件
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // 添加滑动条相关的状态
     val showSlider = remember { mutableStateOf(false) }

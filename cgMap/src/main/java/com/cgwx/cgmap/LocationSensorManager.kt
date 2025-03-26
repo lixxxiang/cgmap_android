@@ -143,7 +143,6 @@ class LocationSensorManager(
      */
     override fun onSensorChanged(event: SensorEvent?) {
         event ?: return
-
         when (event.sensor.type) {
             Sensor.TYPE_LINEAR_ACCELERATION -> {
                 val ax = event.values[0]
@@ -211,6 +210,7 @@ class LocationSensorManager(
                 "longitude" to convert["lon"],
                 "accuracy" to location.accuracy
             )
+            Log.d("??", "DDD")
             locationListener.onLocationChanged(locationData)
         }
     }
@@ -299,14 +299,23 @@ class LocationSensorManager(
     /**
      * Update the azimuth (compass heading) based on gravity and magnetic field data
      */
+    private var lastAzimuthDeg: Double = -1.0
+    private val azimuthThreshold = 3.0  // 设置一个最小角度变化阈值（单位：度）
+
     private fun updateAzimuth() {
         val rotationMatrix = FloatArray(9)
         val success = SensorManager.getRotationMatrix(rotationMatrix, null, gravityValues, magneticValues)
         if (success) {
             val orientation = FloatArray(3)
             SensorManager.getOrientation(rotationMatrix, orientation)
-            azimuthDeg = (Math.toDegrees(orientation[0].toDouble()) + 360) % 360
-            azimuthListener.onAzimuthChanged(azimuthDeg)
+            val newAzimuth = (Math.toDegrees(orientation[0].toDouble()) + 360) % 360
+
+            if (abs(newAzimuth - lastAzimuthDeg) > azimuthThreshold || lastAzimuthDeg < 0) {
+                azimuthDeg = newAzimuth
+                lastAzimuthDeg = newAzimuth
+                Log.d("azimuthDeg", azimuthDeg.toString())
+                azimuthListener.onAzimuthChanged(azimuthDeg)
+            }
         }
     }
 }

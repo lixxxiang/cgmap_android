@@ -86,6 +86,7 @@ class CGMapView @JvmOverloads constructor(
     val target: LiveData<CGLatLng> get() = _target
     private val overlayLayers = mutableListOf<CGOverlayLayer>()
     private var transitionAnimator: ValueAnimator? = null
+    private var currentAzimuth: Double = 0.0
 
     init {
         Logger.addLogAdapter(AndroidLogAdapter())
@@ -94,7 +95,7 @@ class CGMapView @JvmOverloads constructor(
         addView(mapView)
         initializeMap()
         locationSensorManager = LocationSensorManager(context, this, this)
-
+        locationSensorManager.registerSensors()
         downloadObserver = { progress ->
             Log.d("CGMapView", "Download progress: ${progress.status}")
             when (progress.status) {
@@ -262,7 +263,8 @@ class CGMapView @JvmOverloads constructor(
                 PropertyFactory.iconImage("marker-icon"),
                 PropertyFactory.iconSize(scaleFactor),
                 PropertyFactory.iconIgnorePlacement(true),
-                PropertyFactory.iconAllowOverlap(true)
+                PropertyFactory.iconAllowOverlap(true),
+                PropertyFactory.iconRotate(currentAzimuth.toFloat())
             )
         )
     }
@@ -441,6 +443,7 @@ class CGMapView @JvmOverloads constructor(
     }
 
     override fun onAzimuthChanged(azimuth: Double) {
+        currentAzimuth = azimuth
         val style = mapLibreMap?.style ?: return
         val layer = style.getLayer("marker-layer") as? SymbolLayer ?: return
 
@@ -1100,6 +1103,7 @@ class CGMapView @JvmOverloads constructor(
                             else -> value.toString()
                         }
                     }
+
                     else -> value.toString()
                 }
                 cgFeature.addExtra(mapOf(key to strValue))
