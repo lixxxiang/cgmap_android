@@ -830,6 +830,7 @@ class CGMapView @JvmOverloads constructor(
      * @param zoom The target zoom level
      */
     fun flyTo(cgLatLng: CGLatLng, zoom: Double) {
+        Log.d("TAG", cgLatLng.toFormattedString())
         mapLibreMap?.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
                 cgLatLng.toLatLng(),

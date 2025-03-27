@@ -210,7 +210,6 @@ class LocationSensorManager(
                 "longitude" to convert["lon"],
                 "accuracy" to location.accuracy
             )
-            Log.d("??", "DDD")
             locationListener.onLocationChanged(locationData)
         }
     }
@@ -313,7 +312,7 @@ class LocationSensorManager(
             if (abs(newAzimuth - lastAzimuthDeg) > azimuthThreshold || lastAzimuthDeg < 0) {
                 azimuthDeg = newAzimuth
                 lastAzimuthDeg = newAzimuth
-                Log.d("azimuthDeg", azimuthDeg.toString())
+//                Log.d("azimuthDeg", azimuthDeg.toString())
                 azimuthListener.onAzimuthChanged(azimuthDeg)
             }
         }

@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                 cgMapView,
                 {
                     storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
+                },
             )
         }
     }
@@ -139,13 +139,21 @@ fun MainScreen(
     savedInstanceState: Bundle? = null,
     onRequestPermission: () -> Unit,
     cgMapView: MutableState<CGMapView?>,
-    onRequestStoragePermission: () -> Unit
+    onRequestStoragePermission: () -> Unit,
 ) {
     val calloutFlag = remember { mutableStateOf<Boolean>(true) }
     val panFlag = remember { mutableStateOf<Boolean>(false) }
     val vertexFlag = remember { mutableStateOf<Boolean>(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val myLocation = remember { mutableStateOf<CGLatLng?>(null) }
+
+    // 添加位置观察者
+    LaunchedEffect(cgMapView.value) {
+        cgMapView.value?.locationLiveData?.observe(lifecycleOwner) { location ->
+            myLocation.value = location
+        }
+    }
 
     // 添加生命周期观察者
     DisposableEffect(lifecycleOwner) {
@@ -154,21 +162,27 @@ fun MainScreen(
                 Lifecycle.Event.ON_CREATE -> {
                     cgMapView.value?.onCreate(savedInstanceState)
                 }
+
                 Lifecycle.Event.ON_START -> {
                     cgMapView.value?.onStart()
                 }
+
                 Lifecycle.Event.ON_RESUME -> {
                     cgMapView.value?.onResume()
                 }
+
                 Lifecycle.Event.ON_PAUSE -> {
                     cgMapView.value?.onPause()
                 }
+
                 Lifecycle.Event.ON_STOP -> {
                     cgMapView.value?.onStop()
                 }
+
                 Lifecycle.Event.ON_DESTROY -> {
                     cgMapView.value?.onDestroy()
                 }
+
                 Lifecycle.Event.ON_ANY -> {
                     // 处理其他生命周期事件
                 }
@@ -204,7 +218,7 @@ fun MainScreen(
         val (
             layer, addRasterLayer, calloutSwitch, removeRasterLayer, showRasterLayer,
             hideRasterLayer, addSpotButton, recallSpotButton, redoSpotButton, doneSpotButton, addExtraParams, draw) = createRefs()
-        val (locate, myLocation) = createRefs()
+        val (locate, locate2) = createRefs()
         val (measure, measureAdd, measureRecall, measureRedo, measureDone) = createRefs()
         val (move, tempAdd, pan, offline, offlineDownload, stopDownload, addMBTiles, removeMBTiles, showMBTiles, hideMBTiles, deleteMBTiles) = createRefs()
         val (cameraControl, flyTo, longClick, overlay, addOverlay, manageOverlay) = createRefs()
@@ -293,8 +307,14 @@ fun MainScreen(
                 start.linkTo(parent.start)
             })
 
-        FilledIconButton(onClick = onRequestPermission,
-            modifier = Modifier.constrainAs(myLocation) {
+        FilledIconButton(onClick = {
+            if(myLocation.value == null){
+                onRequestPermission()
+            }else{
+                cgMapView.value?.flyTo(myLocation.value!!, 18.0)
+            }
+        },
+            modifier = Modifier.constrainAs(locate2) {
                 top.linkTo(layer.bottom)
                 start.linkTo(locate.end)
             }) {
